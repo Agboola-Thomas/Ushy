@@ -1,0 +1,41 @@
+version: "3.9"
+   
+services:
+  ushy-website-db:
+    container_name: ushy-website-db
+    image: postgres
+    restart: always
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    env_file: docker.env
+    environment:
+      POSTGRES_NAME: ${POSTGRES_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    restart: always
+    env_file: docker.env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
+
+  ushy-website:
+    container_name: ushy-website
+    restart: always
+    build: .
+    command: >
+      sh -c "python manage.py makemigrations website &&
+            python manage.py migrate &&
+            python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    env_file: docker.env
+    depends_on:
+      - ushy-website-db
